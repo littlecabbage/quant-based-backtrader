@@ -1,0 +1,25 @@
+cash = 100000  # 初始资金
+
+[stock]
+symbol = ["000063"]  # 股票代码
+adjust = "hfq"  # 复权方式，qfq-前复权 hfq-后复权 none-不复权
+
+[date]  # 回测日期
+start_year = 2020
+start_month = 1
+start_day = 1
+end_year = 2020
+end_month = 12
+end_day = 31
+
+[strategy]
+name = "MACD"  # 策略名称
+
+[broker]
+commission = 0.0006  # 佣金费率万分之6
+stamp_duty = 0.0005  # 印花税 万分之5
+transfer_fee = 0.00001  # 过户费 十万分之1
+percabs = false  # 为True则使用小数，为False则使用百分数
+
+[log]
+doprint = true  # 是否打印日志
