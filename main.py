@@ -34,7 +34,7 @@ def main():
         plt.rcParams["font.sans-serif"] = ["SimHei"]
     else:
         plt.rcParams['font.family'] = 'sans-serif'
-    plt.rcParams['font.sans-serif'] = ['Hiragino Sans GB', 'Hiragino Sans']  # 优先冬青黑体，其次ヒラギノ角ゴ
+    plt.rcParams['font.sans-serif'] = ['Hiragino Sans GB', 'Hiragino Sans']  
     plt.rcParams["axes.unicode_minus"] = False
 
     start_date, end_date = (
