@@ -9,5 +9,7 @@ wheels/
 # Virtual environments
 .venv
 
-
+.env
 backtrader_.py
+stock_db_based_Tushare.db
+.DS_Store

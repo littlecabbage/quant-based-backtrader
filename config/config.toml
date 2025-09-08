@@ -2,13 +2,13 @@ cash = 100000  # 初始资金
 
 [stock]
 symbol = ["000063"]  # 股票代码
-adjust = "hfq"  # 复权方式，qfq-前复权 hfq-后复权 none-不复权
+adjust = "qfq"  # 复权方式，qfq-前复权 hfq-后复权 none-不复权
 
 [date]  # 回测日期
-start_year = 2020
+start_year = 2022
 start_month = 1
 start_day = 1
-end_year = 2020
+end_year = 2023
 end_month = 12
 end_day = 31
 
@@ -23,3 +23,11 @@ percabs = false  # 为True则使用小数，为False则使用百分数
 
 [log]
 doprint = true  # 是否打印日志
+
+[db]
+# 数据库配置（本地MySQL）
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=
+DB_NAME=stock_data

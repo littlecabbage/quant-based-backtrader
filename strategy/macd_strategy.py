@@ -1,21 +1,32 @@
 import numpy as np
 import backtrader as bt
+from scipy.signal import argrelextrema, find_peaks
+
+'''
+# 指标：
+MA15
+MACD 30 50 6
+ATR 5
+
+## 开仓信号：
+1. 满足close< MA15
+2. diff <0 
+3. diff > dea 其实就是水下金叉
+4. 最近1日成交量 > 过去2日成交量平均值
+
+## 平仓信号：
+1. 满足 close > MA15 + 0.5atr
+2. Bar>0 且 iloc[-5:-2]的bar存在peak（用numpy的库）
+3. bar的一阶导数为负数
+4. 成交量具有显著性，这个可以用z-score或者用 最近1日成交量 > 过去2日成交量平均值
+'''
 
 class MACDStrategy(bt.Strategy):
     name = "MACD"
 
     def __init__(self, **params) -> None:
-        
         super().__init__()
-        default_params = {
-            "ma_period": 15,
-            "macd_fast": 30,
-            "macd_slow": 50,
-            "macd_signal": 6,
-            "atr_period": 5,
-            "zscore_threshold": 1.5,
-        }
-        self.params_dict = {**default_params, **(params or {})}
+        self.params_dict = params
 
         # 指标计算
         self.ma15 = bt.indicators.SimpleMovingAverage(
@@ -34,8 +45,9 @@ class MACDStrategy(bt.Strategy):
         self.dea = self.macd.signal  # 信号线
 
         # 存储最近5根Bar的峰值检测数据
-        self.high_window = bt.indicators.Highest(self.data.high, period=3)
-        self.peak_detected = False
+        # 存储最近的高点数据用于峰值检测
+        self.high_buffer = []
+        self.min_bars = max(50, self.params_dict["peak_window"] + 3)  # 最大指标所需最小bar数
         
         # 交易状态跟踪
         self.order = None
@@ -67,16 +79,37 @@ class MACDStrategy(bt.Strategy):
         exit_condition1 = self.data.close[0] > self.ma15[0] + 0.5 * self.atr[0]
         
         # 条件2: 在 iloc[-5:-2] 区间（不含当前bar）是否存在局部峰值
-        if len(self.data) >= 6:
-            highs = np.array([
-                self.data.high[-5],
-                self.data.high[-4],
-                self.data.high[-3]
-            ])
-            # 任意局部峰值：高于左右相邻（窗口内的内部点才具备左右）
-            # 这里窗口长度为3，只有中间点可成为峰值
-            self.peak_detected = (highs[1] > highs[0]) and (highs[1] > highs[2])
-        exit_condition2 = self.peak_detected
+        # if len(self.data) >= 6:
+        #     highs = np.array([
+        #         self.data.high[-5],
+        #         self.data.high[-4],
+        #         self.data.high[-3]
+        #     ])
+        #     # 任意局部峰值：高于左右相邻（窗口内的内部点才具备左右）
+        #     # 这里窗口长度为3，只有中间点可成为峰值
+        #     self.peak_detected = (highs[1] > highs[0]) and (highs[1] > highs[2])
+        # exit_condition2 = self.peak_detected
+
+        ################# 改用scipy的find_peaks方法检测峰值 #################
+        exit_condition2 = False
+        window_size = self.params_dict["peak_window"]
+        
+        # 维护一个固定长度的价格窗口
+        if len(self.high_buffer) >= window_size:
+            self.high_buffer.pop(0)
+        self.high_buffer.append(self.data.high[-1])
+        
+        # 当有足够数据时检测峰值
+        if len(self.high_buffer) >= window_size:
+            # 使用scipy检测局部极大值
+            highs = np.array(self.high_buffer)
+            peak_indices = argrelextrema(highs, np.greater, order=1)[0]
+            # peak_indices = find_peaks(highs)[0]
+            
+            # 检查指定区间[-5:-2]是否存在峰值
+            # 转换为缓冲区内的相对位置
+            target_range = range(window_size - 5, window_size - 2)
+            exit_condition2 = any(i in peak_indices for i in target_range)
         
         # 条件3: Bar的一阶导数为负（解释为价格短期下降）
         # 说明：使用当前Bar vs 前1Bar的收盘价判断

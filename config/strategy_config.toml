@@ -8,3 +8,4 @@ macd_slow = 50
 macd_signal = 6
 atr_period = 5  # ATR的计算周期
 zscore_threshold = 1.5
+peak_window = 5  # 峰值检测窗口大小
