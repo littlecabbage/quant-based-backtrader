@@ -31,12 +31,21 @@
     ```
 
 # 使用方法
+## 首次使用
+1. 在`./config/`新建`.env`文件，并写入`TUSHARE_TOKEN= <Your Token>`
+2. 执行`python main.py inin_db`，从`Tushare`获取数据。
+## 进行回测
+进行回测时数据库会自动更新。
 1. 修改`config/config.toml`和`config/strategy_config.toml`
 2. 执行:
 ```python
-python main.py
+python main.py run
 ```
-# 
+## 只想更新数据库
+执行:
+```python
+python main.py update
+```
 
 # 进度
 - [x] 架构构思和搭建

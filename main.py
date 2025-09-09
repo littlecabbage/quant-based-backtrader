@@ -99,4 +99,25 @@ def main(update_db: bool = True):
     cerebro.plot(style='candlestick')
 
 if __name__ == "__main__":
-    main()
+    import argparse
+    parser = argparse.ArgumentParser(description='quantitative trading with Backtrader')
+    parser.add_argument('task', metavar='t', type=str, default='run',
+                   help='''run: update database & run backtest; 
+                   update: ONLY update database; 
+                   init_db: initialize database, two date parameters required''')
+    parser.add_argument('start_date', metavar='s', type=str, nargs='?', default=None,
+                   help='start date for backtest in YYYYMMDD format')
+    parser.add_argument('end_date', metavar='e', type=str, nargs='?', default=None,
+                   help='end date for backtest in YYYYMMDD format')
+    args = parser.parse_args()
+
+    if args.task == 'run':
+        main(update_db=True)
+    elif args.task == 'update':
+        data_downloader = TushareDownloader()
+        data_downloader.update()
+    elif args.task == 'init_db':
+        data_downloader = TushareDownloader()
+        data_downloader.frist_download(start_date=args.start_date, end_date=args.end_date)
+    else:
+        print("无效的任务参数，请使用 'run', 'update' 或 'init_db'。")
