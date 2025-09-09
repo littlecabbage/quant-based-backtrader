@@ -1,5 +1,6 @@
 import sys
 from datetime import datetime
+import calendar
 import tomllib
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -9,10 +10,12 @@ from pprint import pprint as pp
 
 from strategy.config_loader import StrategyConfig
 from commission.commission import MyStockCommissionScheme
-from data.akshare_data import get_stock_data
+# from data.akshare_data import get_stock_data
+from data.db_reader import StockDBReader
+from data.db_based_tushare import TushareDownloader
 
 
-def main():
+def main(update_db: bool = True):
     with open("config/config.toml", "rb") as f:
         config = tomllib.load(f)
 
@@ -37,14 +40,28 @@ def main():
     plt.rcParams['font.sans-serif'] = ['Hiragino Sans GB', 'Hiragino Sans']  
     plt.rcParams["axes.unicode_minus"] = False
 
+    end_month_last_day = calendar.monthrange(config["date"]["end_year"], config["date"]["end_month"])[1]
     start_date, end_date = (
         datetime(config["date"]["start_year"], config["date"]["start_month"], 1),
-        datetime(config["date"]["end_year"], config["date"]["end_month"], 1),
+        datetime(config["date"]["end_year"], config["date"]["end_month"], end_month_last_day),
     )
 
-    raw_data = get_stock_data(
-        symbol=config["stock"]["symbol"][0],
-        adjust=config["stock"]["adjust"]
+    # raw_data = get_stock_data(
+    #     symbol=config["stock"]["symbol"][0],
+    #     adjust=config["stock"]["adjust"]
+    # )
+    
+    # 更新数据库
+    if update_db:
+        data_downloader = TushareDownloader()
+        data_downloader.update()
+    # 读取数据库
+    db_reader = StockDBReader()
+    raw_data = db_reader.get_daily_price(
+        ts_code=config["stock"]["symbol"][0],
+        start_date=start_date.strftime('%Y%m%d'),
+        end_date=end_date.strftime('%Y%m%d'),
+        adj_type=config["stock"]["adjust"]
     )
 
     strategy_cfg = StrategyConfig()
@@ -58,8 +75,7 @@ def main():
     data = bt.feeds.PandasData(
         dataname=raw_data,
         fromdate=start_date,
-        todate=end_date,
-        plot=True
+        todate=end_date
     )
     cerebro.adddata(data)
     cerebro.addstrategy(strategy_class, **strategy_params)
