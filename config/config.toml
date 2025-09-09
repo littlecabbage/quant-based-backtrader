@@ -24,10 +24,10 @@ percabs = false  # 为True则使用小数，为False则使用百分数
 [log]
 doprint = true  # 是否打印日志
 
-[db]
-# 数据库配置（本地MySQL）
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=
-DB_NAME=stock_data
+# [db]
+# # 数据库配置（本地MySQL）
+# DB_HOST=localhost
+# DB_PORT=3306
+# DB_USER=root
+# DB_PASSWORD=
+# DB_NAME=stock_data

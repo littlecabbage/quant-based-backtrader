@@ -20,3 +20,12 @@ def get_stock_data(symbol: str, adjust: str) -> pd.DataFrame:
     stock_hfq_df['date'] = pd.to_datetime(stock_hfq_df['date'])
     stock_hfq_df = stock_hfq_df.set_index('date')
     return stock_hfq_df
+
+if __name__ == '__main__':
+    # --- 使用示例 ---
+    symbol = '000063'  # 示例股票代码
+    adjust = 'qfq'     # 前复权
+    df = get_stock_data(symbol, adjust)
+    print(df.head())
+    print(df.info())
+    print(df.describe())
