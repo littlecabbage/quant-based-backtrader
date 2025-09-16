@@ -11,7 +11,8 @@
 │   ├── config.toml
 │   └── strategy_config.toml
 ├── data/                       # 数据处理模块
-│   └── akshare_data.py
+│   ├── db_based_tushare.py     # 从数据源获取数据，存放到数据库
+│   └── db_reader.py            # 从数据库读取数据，并转为bt适用的格式
 ├── main.py                     # 主逻辑入口
 └── strategy/                   # 策略模块
     ├── config_loader.py        # 策略注册，用来实现工厂模式
@@ -19,9 +20,7 @@
 ```
 这个项目在 backtrader 基本使用方法的基础上，做了以下两件事：
 * 模块化。把`data`、`strategy`和`commssion`三个部分从主逻辑中分离出来。方便定制化拓展。
-* 配置化。
-    * 数据与逻辑解耦
-    * 对拓展开放，对修改关闭
+* 配置化。方便调试策略。
 
 # 部署
 1. Python解释器**必须**使用3.11。
@@ -50,5 +49,5 @@ python main.py update
 # 进度
 - [x] 架构构思和搭建
 - [x] 回测流程跑通
-- [x] MCAD策略实现（有点奇怪，需要调试）
+- [x] MCAD策略实现
 - [ ] 接入券商api，实现交易
