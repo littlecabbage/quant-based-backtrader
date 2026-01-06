@@ -5,15 +5,22 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = "==3.11.12"
 dependencies = [
-    "backtracker>=0.0.7",
+    "backtrader>=1.9.76.123",
     "pandas>=2.0.3",
     "akshare>=1.9.73",
+    "matplotlib>=3.2.2",
+    "scipy>=1.11.0",
+    "sqlalchemy>=2.0.0",
+    "tushare>=1.2.89",
+    "python-dotenv>=1.0.0",
+    "sqlmodel>=0.0.16",
 ]
 
 [dependency-groups]
 dev = [
     "mypy==1.11.0",
     "pre-commit==4.2.0",
+    "pytest==8.3.3",
     "ruff==0.5.5",
 ]
 

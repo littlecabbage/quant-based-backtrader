@@ -1,9 +1,9 @@
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 
 import backtrader as bt
 
 
-class TradeStrategy(bt.Strategy, metaclass=ABCMeta):
+class TradeStrategy(bt.Strategy):
     strategy_name: str | None = None  # 用于标识策略名称(可选)
 
     def __init__(self, **params) -> None:

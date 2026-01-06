@@ -52,9 +52,10 @@ def main(update_db: bool = True):
     # )
     
     # 更新数据库
+    data_downloader = TushareDownloader()
     if update_db:
-        data_downloader = TushareDownloader()
         data_downloader.update()
+    
     # 读取数据库
     db_reader = StockDBReader()
     raw_data = db_reader.get_daily_price(
@@ -63,6 +64,26 @@ def main(update_db: bool = True):
         end_date=end_date.strftime('%Y%m%d'),
         adj_type=config["stock"]["adjust"]
     )
+    
+    # 如果没有数据，执行首次下载
+    if raw_data.empty:
+        print("数据库中没有数据，执行首次下载...")
+        # 设置合理的默认日期范围（最近2年）
+        default_start_date = (datetime.now() - pd.DateOffset(years=2)).strftime('%Y%m%d')
+        default_end_date = datetime.now().strftime('%Y%m%d')
+        data_downloader.first_download(start_date=default_start_date, end_date=default_end_date)
+        # 重新读取数据
+        raw_data = db_reader.get_daily_price(
+            ts_code=config["stock"]["symbol"][0],
+            start_date=start_date.strftime('%Y%m%d'),
+            end_date=end_date.strftime('%Y%m%d'),
+            adj_type=config["stock"]["adjust"]
+        )
+        
+        # 如果仍然没有数据，退出程序
+        if raw_data.empty:
+            print("首次下载后仍然没有数据，可能是因为股票代码不存在或日期范围不正确。")
+            return
 
     strategy_cfg = StrategyConfig()
     strategy_class, strategy_params = strategy_cfg.get_strategy(
@@ -118,6 +139,6 @@ if __name__ == "__main__":
         data_downloader.update()
     elif args.task == 'init_db':
         data_downloader = TushareDownloader()
-        data_downloader.frist_download(start_date=args.start_date, end_date=args.end_date)
+        data_downloader.first_download(start_date=args.start_date, end_date=args.end_date)
     else:
         print("无效的任务参数，请使用 'run', 'update' 或 'init_db'。")

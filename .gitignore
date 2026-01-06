@@ -14,3 +14,4 @@ backtrader_.py
 stock_db_based_Tushare.*
 .DS_Store
 .cursor
+uv.lock

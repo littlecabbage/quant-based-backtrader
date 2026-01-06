@@ -114,7 +114,7 @@ class TushareDownloader:
         else:
             print(f"没有需要向 {table_name} 插入的新记录。")
 
-    def frist_download(self, start_date: str, end_date: str) -> None:
+    def first_download(self, start_date: str, end_date: str) -> None:
         """首次下载所有数据"""
         self.get_stock_basic()
         self.get_trade_cal(start_date, end_date)
@@ -259,7 +259,7 @@ if __name__ == "__main__":
     start_date = (datetime.now() - timedelta(days=365 * 2)).strftime("%Y%m%d")
     end_date = datetime.now().strftime("%Y%m%d")
     print(f"开始首次下载，日期范围: {start_date} -> {end_date}")
-    downloader.frist_download(start_date=start_date, end_date=end_date)
+    downloader.first_download(start_date=start_date, end_date=end_date)
 
     # # --- 更新数据 ---
     # # 首次下载完成后，日常应运行 update() 来获取最新数据。
