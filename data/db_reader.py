@@ -1,6 +1,6 @@
 import pandas as pd
-from sqlalchemy import create_engine, Engine
-from typing import List, Union
+from sqlalchemy import Engine, create_engine
+
 
 class StockDBReader:
     def __init__(self, db_name: str = "stock_db_based_Tushare.db"):
@@ -11,10 +11,9 @@ class StockDBReader:
         self.db_path = f"sqlite:///{db_name}"
         self.engine: Engine = create_engine(self.db_path)
 
-    def get_raw_daily_price(self, 
-                        ts_code: Union[str, List[str]], 
-                        start_date: str, 
-                        end_date: str) -> pd.DataFrame:
+    def get_raw_daily_price(
+        self, ts_code: str | list[str], start_date: str, end_date: str
+    ) -> pd.DataFrame:
         """
         从数据库中获取指定股票在指定时间段内的日线数据。
 
@@ -26,18 +25,17 @@ class StockDBReader:
         if isinstance(ts_code, str):
             ts_code_tuple = f"('{ts_code}')"
         elif isinstance(ts_code, list):
-            ts_code_tuple = tuple(ts_code)
-            if len(ts_code_tuple) == 1:
+            if len(ts_code) == 1:
                 # 如果列表只有一个元素，SQL IN 子句需要 ('code',) 格式
-                ts_code_tuple = f"('{ts_code_tuple[0]}')"
+                ts_code_tuple = f"('{ts_code[0]}')"
             else:
-                ts_code_tuple = str(ts_code_tuple)
+                ts_code_tuple = str(tuple(ts_code))
         else:
             raise TypeError("ts_code 必须是字符串或列表类型。")
 
         # 移除日期字符串中的 '-' 以兼容 YYYYMMDD 和 YYYY-MM-DD 两种格式
-        start_date_formatted = start_date.replace('-', '')
-        end_date_formatted = end_date.replace('-', '')
+        start_date_formatted = start_date.replace("-", "")
+        end_date_formatted = end_date.replace("-", "")
 
         query = f"""
         SELECT *
@@ -47,7 +45,7 @@ class StockDBReader:
           AND REPLACE(trade_date, '-', '') <= '{end_date_formatted}'
         ORDER BY trade_date ASC;
         """
-        
+
         try:
             df = pd.read_sql(query, self.engine)
             return df
@@ -55,10 +53,9 @@ class StockDBReader:
             print(f"查询数据时发生错误: {e}")
             return pd.DataFrame()
 
-    def get_adj_factor(self,
-                       ts_code: Union[str, List[str]],
-                       start_date: str,
-                       end_date: str) -> pd.DataFrame:
+    def get_adj_factor(
+        self, ts_code: str | list[str], start_date: str, end_date: str
+    ) -> pd.DataFrame:
         """
         从数据库中获取指定股票在指定时间段内的复权因子。
 
@@ -70,16 +67,15 @@ class StockDBReader:
         if isinstance(ts_code, str):
             ts_code_tuple = f"('{ts_code}')"
         elif isinstance(ts_code, list):
-            ts_code_tuple = tuple(ts_code)
-            if len(ts_code_tuple) == 1:
-                ts_code_tuple = f"('{ts_code_tuple[0]}')"
+            if len(ts_code) == 1:
+                ts_code_tuple = f"('{ts_code[0]}')"
             else:
-                ts_code_tuple = str(ts_code_tuple)
+                ts_code_tuple = str(tuple(ts_code))
         else:
             raise TypeError("ts_code 必须是字符串或列表类型。")
 
-        start_date_formatted = start_date.replace('-', '')
-        end_date_formatted = end_date.replace('-', '')
+        start_date_formatted = start_date.replace("-", "")
+        end_date_formatted = end_date.replace("-", "")
 
         query = f"""
         SELECT ts_code, trade_date, adj_factor
@@ -97,11 +93,13 @@ class StockDBReader:
             print(f"查询复权因子时发生错误: {e}")
             return pd.DataFrame()
 
-    def get_daily_price(self, 
-                        ts_code: Union[str, List[str]], 
-                        start_date: str, 
-                        end_date: str,
-                        adj_type: str = 'qfq') -> pd.DataFrame:
+    def get_daily_price(
+        self,
+        ts_code: str | list[str],
+        start_date: str,
+        end_date: str,
+        adj_type: str = "qfq",
+    ) -> pd.DataFrame:
         """
         获取并处理指定股票在指定时间段内的日线数据，返回符合 Backtrader 要求的格式。
 
@@ -116,42 +114,49 @@ class StockDBReader:
             print("未查询到数据。")
             return df
 
-        if adj_type in ['qfq', 'hfq']:
+        if adj_type in ["qfq", "hfq"]:
             df_adj = self.get_adj_factor(ts_code, start_date, end_date)
             if df_adj.empty:
                 print("警告: 未查询到复权因子，返回不复权数据。")
             else:
-                df = pd.merge(df, df_adj, on=['ts_code', 'trade_date'], how='left')
-                df = df.sort_values(by=['ts_code', 'trade_date'])
-                df['adj_factor'] = df.groupby('ts_code')['adj_factor'].ffill()
-                df = df.dropna(subset=['adj_factor'])
+                df = pd.merge(df, df_adj, on=["ts_code", "trade_date"], how="left")
+                df = df.sort_values(by=["ts_code", "trade_date"])
+                df["adj_factor"] = df.groupby("ts_code")["adj_factor"].ffill()
+                df = df.dropna(subset=["adj_factor"])
 
                 if not df.empty:
-                    price_cols = ['open', 'close', 'high', 'low']
-                    
-                    if adj_type == 'hfq':
-                        df[price_cols] = df[price_cols].multiply(df['adj_factor'], axis=0)
-                        df['vol'] = df['vol'] / df['adj_factor']
-                    elif adj_type == 'qfq':
-                        last_factors = df.groupby('ts_code')['adj_factor'].transform('last')
-                        qfq_factor = df['adj_factor'] / last_factors
+                    price_cols = ["open", "close", "high", "low"]
+
+                    if adj_type == "hfq":
+                        df[price_cols] = df[price_cols].multiply(
+                            df["adj_factor"], axis=0
+                        )
+                        df["vol"] = df["vol"] / df["adj_factor"]
+                    elif adj_type == "qfq":
+                        last_factors = df.groupby("ts_code")["adj_factor"].transform(
+                            "last"
+                        )
+                        qfq_factor = df["adj_factor"] / last_factors
                         df[price_cols] = df[price_cols].multiply(qfq_factor, axis=0)
-                        df['vol'] = df['vol'] / qfq_factor
+                        df["vol"] = df["vol"] / qfq_factor
 
         # 选择并重命名所需的列
-        df = df[['trade_date', 'open', 'close', 'high', 'low', 'vol']]
-        df.columns = ['date', 'open', 'close', 'high', 'low', 'volume']
+        df = df[["trade_date", "open", "close", "high", "low", "vol"]]
+        df.columns = ["date", "open", "close", "high", "low", "volume"]
 
         # 将 date 列转换为 datetime 类型并设置为索引
-        df['date'] = pd.to_datetime(df['date'])
-        df = df.set_index('date')
+        df["date"] = pd.to_datetime(df["date"])
+        df = df.set_index("date")
 
         return df
-    
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     reader = StockDBReader()
 
-    df = reader.get_daily_price(ts_code='000063.SZ', start_date='20250901', end_date='20250908')
+    df = reader.get_daily_price(
+        ts_code="000063.SZ", start_date="20250901", end_date="20250908"
+    )
     print(df.head())
     print(df.info())
     print(df.describe())
