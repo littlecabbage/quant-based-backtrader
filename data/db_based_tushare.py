@@ -213,7 +213,7 @@ class TushareDownloader:
             ).strftime("%Y%m%d")
             end_date = datetime.now().strftime("%Y%m%d")
 
-            if start_date > end_date:
+            if start_date >= end_date:
                 print("数据已经是最新的，无需更新。")
                 return
 
